@@ -10,22 +10,34 @@ function DProxy(obj, callback) {
         obj[key] = val;
     };
 
-    const merge = function(obj, robj) {
-        robj = robj ?? this;
-        // console.log('MERGE', obj, robj);
+    const merge = function(obj, pobj, robj) {
+        pobj = pobj ?? this.p;
+        robj = robj ?? this.r;
+        //console.log('BIGMERGE', obj, pobj, robj);
         for (let key in obj) {
+            //console.log('MERGE CMP', robj, key, robj[key]);
+            //console.log('MERGE CMP', key, pobj[key]);
+            if (robj == this.r) pobj[key];
+            if (robj[key] === undefined) continue;            
+            //console.log('MERGE', obj, typeof obj[key], pobj, robj, key);
             if (typeof obj[key] == 'object') {
-                merge(obj[key], robj[key]);
+                //console.log('MERGE IN', obj[key], pobj[key], robj[key]);
+                merge(obj[key], pobj[key], robj[key]);
+                //console.log('MERGE BACK', obj, robj, key);
             } else {
-                robj[key] = obj[key];
+                //console.log('MERGE SET', key, obj[key]);
+                pobj[key] = obj[key];
             }
         }
+        //console.log('MERGE EXIT', obj, robj);
     };
     
     // Generic proxy handler
     const handler = {
         get(obj, key, _) {
-            // console.log('get', obj, key, obj[key]);
+            //console.log('get', obj, key, obj[key]);
+            //console.log('get', obj, _this.mainObject);
+            
             if (obj == _this.mainObject && key == '_object') {
                 return _this.mainObject;
             }
@@ -33,9 +45,12 @@ function DProxy(obj, callback) {
                 return set.bind(_this.mainProxy);
             }
             if (obj == _this.mainObject && key == 'merge') {
-                return merge.bind(_this.mainProxy);
-            }
+                return merge.bind({p: _this.mainProxy, r: _this.mainObject});
+            }            
             if (key == '__isProxy') return true;
+            
+            if (obj == _this.mainObject) _this.fullKey = '';            
+            
             if (typeof obj[key] == 'object') {
                 _this.fullKey += '.'+key;
                 return new Proxy(obj[key], handler);
@@ -48,14 +63,13 @@ function DProxy(obj, callback) {
             if (obj.__isProxy) {
                 obj[key] = val;
             } else {
-                _this.fullKey += '.'+key;
-                cb(_this.fullKey, val);
-                _this.fullKey = '';
+                _this.callback(_this.fullKey+'.'+key, val, obj);
                 obj[key] = val;
             }
         }
     };
     
+    _this.callback = callback;
     _this.fullKey = '';
     _this.mainObject = obj;
     _this.mainProxy = new Proxy(obj, handler);
