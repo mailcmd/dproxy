@@ -18,7 +18,7 @@ function DProxy(obj, callback) {
             //console.log('MERGE CMP', robj, key, robj[key]);
             //console.log('MERGE CMP', key, pobj[key]);
             if (robj == this.r) pobj[key];
-            if (robj[key] === undefined) continue;            
+            if (robj[key] === undefined) continue;
             //console.log('MERGE', obj, typeof obj[key], pobj, robj, key);
             if (typeof obj[key] == 'object') {
                 //console.log('MERGE IN', obj[key], pobj[key], robj[key]);
@@ -38,24 +38,41 @@ function DProxy(obj, callback) {
             //console.log('get', obj, key, obj[key]);
             //console.log('get', obj, _this.mainObject);
             
+            // return the background real object
             if (obj == _this.mainObject && key == '_object') {
                 return _this.mainObject;
             }
+            // Special function set
             if (obj == _this.mainObject && key == 'set') {
                 return set.bind(_this.mainProxy);
             }
+            // Special function merge
             if (obj == _this.mainObject && key == 'merge') {
                 return merge.bind({p: _this.mainProxy, r: _this.mainObject});
-            }            
+            }
+            // Ask if it is a Proxy, return always true
             if (key == '__isProxy') return true;
             
-            if (obj == _this.mainObject) _this.fullKey = '';            
+            // clear fullKey because is the start of the chain of keys
+            if (obj == _this.mainObject) _this.fullKey = '';
             
+            // simulate array
+            if (Object.getOwnPropertyNames(Array.prototype).includes(key) 
+                && Object.keys(obj).every(n=>!isNaN(n))) {
+                return Object.values(obj)[key];
+            }
+            if (key == 'forEach' && Object.keys(obj).every(n=>!isNaN(n))) {
+                return Object.values(obj).forEach;
+            }
+
+            // it is an object so I return a Proxy
             if (typeof obj[key] == 'object') {
                 _this.fullKey += '.'+key;
                 return new Proxy(obj[key], handler);
             }
+            // clear fullKey because is the end of the chain of keys
             _this.fullKey = '';
+            // default action
             return obj[key];
         },
         set(obj, key, val) {
@@ -77,37 +94,3 @@ function DProxy(obj, callback) {
 }
 
 
-// const container = {
-//     main: {
-//         text: 'Hola',
-//         value: 1,
-//         label: 'etiqueta',
-//         form: [
-//             {name: 'name', value: 'cacho'},
-//             {name: 'pass', value: '123456'}
-//         ]
-//     },
-//     other: {
-//         item1: {
-//             text: 'text',
-//             value: 'value'
-//         },
-//         item2: {
-//             text: 'text',
-//             value: 'value'
-//         }
-//     }
-// };
-
-// const test = {
-//     other: {
-//         item2: { text: 'moco' }
-//     },
-//     main: { form: { 1: { value: '999999' }}}
-// };
-
-// const cb = function(fullKey, val) {
-//     console.log('CALLBACK', fullKey, val);
-// } 
-
-// const dp = new DProxy(container, cb);
