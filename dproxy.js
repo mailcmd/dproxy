@@ -10,6 +10,15 @@ function DProxy(obj, callback) {
         obj[key] = val;
     };
 
+    const get = function(fullKey) {
+        const arrKeys = fullKey.slice(1).split('.');
+        let [key, keys] = [arrKeys.pop(), arrKeys];
+        const obj = keys.reduce((o, k) => {
+            return o[k];
+        }, this);
+        return obj[key];
+    };
+
     const merge = function(obj, pobj, robj) {
         pobj = pobj ?? this.p;
         robj = robj ?? this.r;
@@ -45,6 +54,9 @@ function DProxy(obj, callback) {
             // Special function set
             if (obj == _this.mainObject && key == 'set') {
                 return set.bind(_this.mainProxy);
+            }
+            if (obj == _this.mainObject && key == 'get') {
+                return get.bind(_this.mainProxy);
             }
             // Special function merge
             if (obj == _this.mainObject && key == 'merge') {

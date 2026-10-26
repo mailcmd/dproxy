@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Clock</title>
+</head>
+
+<body>
+  <div arf-id="main">
+    <text value="$$text + '5'"></text> capo
+    <table>
+      <tr foreach="$$form">
+        <td><text value="$$name"></text></td>
+        <td><text value="$$value * 2"></text></td>
+      </tr>
+    </table>
+    
+    <span class="{$$label + 'a'}" xx="hola">IF</span>
+    
+    <div if="$$value % 2 == 0" else-ref="value_mod">
+      <text value="$$value"></text> is par
+    </div>
+    <div else="value_mod">
+      <text value="$$value"></text> is impar
+    </div>
+    
+  </div>
+  
+  
+  <script src="dproxy.js"></script>
+  <script src="arf.js"></script>
+  <script src="index.js"></script>
+</body>
+  
