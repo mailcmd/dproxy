@@ -92,8 +92,8 @@ function DProxy(obj, callback) {
             if (obj.__isProxy) {
                 obj[key] = val;
             } else {
-                _this.callback(_this.fullKey+'.'+key, val, obj);
                 obj[key] = val;
+                _this.callback(_this.fullKey+'.'+key, val, obj);
             }
         }
     };

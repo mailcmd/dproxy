@@ -1,36 +1,5 @@
 Array.prototype.remove = function(i) {return this.splice(i, 1)};
 
-function _LIB() {
-    ////////////////////////////////////////////////////////////////////////////////////////
-    // GETs
-    ////////////////////////////////////////////////////////////////////////////////////////
-    this.get_foreachs = function(elem) {
-        return elem.querySelectorAll(':not(template) [foreach]:not(template)');
-    };
-    
-    this.get_ifs = function(elem) {
-        return elem.querySelectorAll(':not(template) [if]:not(template)');
-    };
-    
-    this.get_texts = function(elem) {
-        return elem.querySelectorAll(':not(template) text');
-    };
-    
-    this.get_attributes = function(elem) {
-        return Object.values(elem.attributes).filter(a => a.value.match(/\{(.*\$\$.+?)\}/));
-    };
-    
-    ////////////////////////////////////////////////////////////////////////////////////////
-    // Tools
-    ////////////////////////////////////////////////////////////////////////////////////////
-    this.push = function(object, key, item) {
-        object[key] = object[key] ?? [];
-        object[key].push(item);
-    };
-    
-    return this;
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -39,8 +8,36 @@ function ARF(arf_id, object) {
     const _this = this;
     
     ////////////////////////////////////////////////////////////////////////////////////////
+    // GETs
+    ////////////////////////////////////////////////////////////////////////////////////////
+    const get_foreachs = function(elem) {
+        return elem.querySelectorAll(':not(template) [foreach]:not(template)');
+    };
+    
+    const get_ifs = function(elem) {
+        return elem.querySelectorAll(':not(template) [if]:not(template)');
+    };
+    
+    const get_texts = function(elem) {
+        return elem.querySelectorAll(':not(template) text');
+    };
+    
+    const get_attributes = function(elem) {
+        return [...elem.querySelectorAll(':not(template) *')].map( el => {
+            return Object.values(el.attributes)
+                .filter(a => a.value.match(/\{(.*\$\$.+?)\}/))
+                .map(a => [{attr: a.localName, elem: el, value: a.value}][0]);
+        }).flat();
+    };
+    
+    ////////////////////////////////////////////////////////////////////////////////////////
     // Tools
     ////////////////////////////////////////////////////////////////////////////////////////
+    const push = function(object, key, item) {
+        object[key] = object[key] ?? [];
+        object[key].push(item);
+    };
+    
     const arf_eval = function(expr, context) {
         expr = expr.replaceAll(/\$\$(.+?)( |$)/g, (_1, m, _2) => {
             const value = _this.dp.get(context+'.'+m);
@@ -64,7 +61,7 @@ function ARF(arf_id, object) {
         tpl.innerHTML = elem.outerHTML;
         elem.before(tpl);
         elem.remove();
-        lib.push(_this.objects, loopvar, {
+        push(_this.objects, loopvar, {
             type: 'foreach',
             elem: tpl,
             parent: parent,
@@ -89,7 +86,7 @@ function ARF(arf_id, object) {
         if_tpl.innerHTML = elem.outerHTML;
         elem.before(if_tpl);
         keys.forEach( key => {
-            lib.push(_this.objects, key, {
+            push(_this.objects, key, {
                 type: 'if',
                 elem: if_tpl,
                 parent: parent,
@@ -107,7 +104,7 @@ function ARF(arf_id, object) {
             else_tpl.innerHTML = elem.outerHTML;
             elem.before(else_tpl);
             keys.forEach( key => {
-                lib.push(_this.objects, key, {
+                push(_this.objects, key, {
                     type: 'if',
                     elem: else_tpl,
                     parent: parent,
@@ -120,6 +117,26 @@ function ARF(arf_id, object) {
         
     };
     
+    const process_attr = function(attr, parent, context) {
+        const matchs = attr.value.matchAll(/\$\$(.+?)( |$)/g).toArray();
+        const keys = [];
+        matchs.forEach( ([_, m]) => {
+            const key = context+'.'+m;
+            keys.push(key);
+        });
+
+        keys.forEach( key => {
+            push(_this.objects, key, {
+                type: 'attr',
+                elem: attr.elem,
+                attr: attr.attr,
+                expr: attr.value,
+                parent: parent,
+                context: context
+            });
+        });
+    };
+    
     const process_text = function(elem, parent, context) {
         let expr = elem.getAttribute('value');
         const matchs = expr.matchAll(/\$\$(.+?)( |$)/g).toArray();
@@ -130,7 +147,7 @@ function ARF(arf_id, object) {
         });
 
         keys.forEach( key => {
-            lib.push(_this.objects, key, {
+            push(_this.objects, key, {
                 type: 'text',
                 elem: elem,
                 parent: parent,
@@ -142,18 +159,18 @@ function ARF(arf_id, object) {
     ////////////////////////////////////////////////////////////////////////////////////////
     // renderers
     ////////////////////////////////////////////////////////////////////////////////////////
-    const render_foreach = function(foreach_obj, key, value) {
+    const render_foreach = function(foreach_obj) {
         const loopvar = foreach_obj.elem.getAttribute('foreach');
         const iterator = loopvar.replace(/\$\$/g, foreach_obj.context+'.');
         _this.dp.get(iterator).forEach((item, i) => {
             const el = foreach_obj.elem.content.children[0].cloneNode(true);
-            foreach_obj.elem.after(el);
+            foreach_obj.elem.parentNode.lastElementChild.after(el);
             process(el, el, iterator+'.'+i);
             render(el);
         });
     };
     
-    const render_if = function(if_obj, key, value) {
+    const render_if = function(if_obj) {
         const expr = if_obj.elem.getAttribute('if');
         if (arf_eval(expr, if_obj.context)) {
             if (!if_obj.elem.nextElementSibling ||
@@ -170,8 +187,13 @@ function ARF(arf_id, object) {
                 if_obj.elem.nextElementSibling.remove();
         }
     };
+    
+    const render_attr = function(attr_obj) {
+        const value = arf_eval(attr_obj.expr, attr_obj.context);
+        attr_obj.elem.setAttribute(attr_obj.attr, value);
+    };
 
-    const render_text = function(text_obj, key, value) {
+    const render_text = function(text_obj) {
         const expr = text_obj.elem.getAttribute('value');
         text_obj.elem.innerHTML = arf_eval(expr, text_obj.context);
     };
@@ -187,10 +209,10 @@ function ARF(arf_id, object) {
     */
     
     const process = function(elem, parent, context) {
-        lib.get_foreachs(elem).forEach(fe => process_foreach(fe, parent, context));
-        lib.get_ifs(elem).forEach(i => process_if(i, parent, context));
-        // attrs
-        lib.get_texts(elem).forEach(n => process_text(n, parent, context));
+        get_foreachs(elem).forEach(fe => process_foreach(fe, parent, context));
+        get_ifs(elem).forEach(i => process_if(i, parent, context));
+        get_attributes(elem).forEach(a => process_attr(a, parent, context));
+        get_texts(elem).forEach(n => process_text(n, parent, context));
     };
     
     const render = function(elem) {
@@ -202,11 +224,26 @@ function ARF(arf_id, object) {
                 }
                 if (obj.parent != elem) return;
                 
-                if (obj.type == 'text') render_text(obj, k);
-                if (obj.type == 'if') render_if(obj, k);
-                if (obj.type == 'foreach') render_foreach(obj, k);
+                if (obj.type == 'foreach') render_foreach(obj);
+                if (obj.type == 'if') render_if(obj);
+                if (obj.type == 'attr') render_attr(obj);
+                if (obj.type == 'text') render_text(obj);
             });
         }
+    };
+    
+    const render_by_key = function(key) {
+        (_this.objects[key] ?? []).forEach( (obj,i) => {
+            if (!obj.elem.isConnected) {
+                _this.objects[key].remove(i);
+                return;
+            }
+
+            if (obj.type == 'foreach') render_foreach(obj);
+            if (obj.type == 'if') render_if(obj);
+            if (obj.type == 'attr') render_attr(obj);
+            if (obj.type == 'text') render_text(obj);
+        });
     };
     
     const init = function() {
@@ -215,13 +252,12 @@ function ARF(arf_id, object) {
     };
     
     ///////////////////////////////////////////////////////////////////////////////////////
-    const lib = new _LIB();
     this.id = arf_id;
     this.container = document.querySelector('[arf-id="'+this.id+'"]');
 
     this.objects = {};
 
-    this.dp = new DProxy(object, console.log);
+    this.dp = new DProxy(object, render_by_key);
     
     init();
 }
