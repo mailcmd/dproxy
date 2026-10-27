@@ -1,18 +1,23 @@
-const container = {
+const datas = {
     main: {
         text: 'Holas',
         value: 1,
         label: 'etiqueta',
-        form: [
-            {name: 'name', value: '10'},
-            {name: 'pass', value: '20'}
-        ]
+        form: {
+            a: {name: 'pass', value: '20'},
+            b: {name: 'name', value: '10'},
+        }
     }
 };
 
 
-const cb = function(fullKey, val) {
-    console.log('CALLBACK', fullKey, val);
-} 
+window.addEventListener('arfready', function(e){
+    console.log('arfready event triggered!', e);
+});
 
-const main = new ARF('main', container.main);
+ARF.add_sandbox('main', datas.main, {
+    tpl: 'main',
+    target: document.body
+});
+
+ARF.init();

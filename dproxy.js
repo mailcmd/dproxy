@@ -22,31 +22,20 @@ function DProxy(obj, callback) {
     const merge = function(obj, pobj, robj) {
         pobj = pobj ?? this.p;
         robj = robj ?? this.r;
-        //console.log('BIGMERGE', obj, pobj, robj);
         for (let key in obj) {
-            //console.log('MERGE CMP', robj, key, robj[key]);
-            //console.log('MERGE CMP', key, pobj[key]);
             if (robj == this.r) pobj[key];
             if (robj[key] === undefined) continue;
-            //console.log('MERGE', obj, typeof obj[key], pobj, robj, key);
             if (typeof obj[key] == 'object') {
-                //console.log('MERGE IN', obj[key], pobj[key], robj[key]);
                 merge(obj[key], pobj[key], robj[key]);
-                //console.log('MERGE BACK', obj, robj, key);
             } else {
-                //console.log('MERGE SET', key, obj[key]);
                 pobj[key] = obj[key];
             }
         }
-        //console.log('MERGE EXIT', obj, robj);
     };
     
     // Generic proxy handler
     const handler = {
         get(obj, key, _) {
-            //console.log('get', obj, key, obj[key]);
-            //console.log('get', obj, _this.mainObject);
-            
             // return the background real object
             if (obj == _this.mainObject && key == '_object') {
                 return _this.mainObject;
@@ -73,9 +62,6 @@ function DProxy(obj, callback) {
                 && Object.keys(obj).every(n=>!isNaN(n))) {
                 return Object.values(obj)[key];
             }
-            if (key == 'forEach' && Object.keys(obj).every(n=>!isNaN(n))) {
-                return Object.values(obj).forEach;
-            }
 
             // it is an object so I return a Proxy
             if (typeof obj[key] == 'object') {
@@ -88,7 +74,6 @@ function DProxy(obj, callback) {
             return obj[key];
         },
         set(obj, key, val) {
-            // console.log('set', obj, key, val);
             if (obj.__isProxy) {
                 obj[key] = val;
             } else {
