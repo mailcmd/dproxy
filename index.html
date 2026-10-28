@@ -6,29 +6,30 @@
 </head>
 
 <body>
-  <template arf-tpl-id="main">
-    <text value="$$text + '5'"></text> capo
+  <template kss-tpl-id="main">
+    <text :content="$$text + '5'"></text> capo
     <table border="2">
-      <tr foreach="$$form">
-        <td><text value="$$name"></text></td>
-        <td><text value="$$value * 2"></text></td>
+      <tr :foreach="$$form">
+        <td><text :content="$$name"></text></td>
+        <td><text :content="$$value * ##value"></text></td>
       </tr>
     </table>
     
     <span class="{$$label + 'a'}" xx="hola">IF</span>
-    
-    <div if="$$value % 2 == 0" else-ref="value_mod">
-      <text value="$$value"></text> is par
+    <button onclick="[$$sum()]">
+      SUM
+    </button>
+    <div :if="$$value % 2 == 0" :else-ref="value_mod">
+      <text :content="$$value"></text> is par
     </div>
-    <div else="value_mod">
-      <text value="$$value"></text> is impar
+    <div :else="value_mod">
+      <text :content="$$value"></text> is impar
     </div>
-    
   </template>
   
   
   <script src="dproxy.js"></script>
-  <script src="arf.js"></script>
+  <script src="kss.js"></script>
   <script src="index.js"></script>
 </body>
   

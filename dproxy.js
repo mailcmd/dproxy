@@ -11,6 +11,8 @@ function DProxy(obj, callback) {
     };
 
     const get = function(fullKey) {
+        if (fullKey == '') return this;
+        if (fullKey == '.') return this;
         const arrKeys = fullKey.slice(1).split('.');
         let [key, keys] = [arrKeys.pop(), arrKeys];
         const obj = keys.reduce((o, k) => {

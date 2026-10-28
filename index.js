@@ -2,6 +2,9 @@ const datas = {
     main: {
         text: 'Holas',
         value: 1,
+        sum: function() {
+            this.value++;
+        },
         label: 'etiqueta',
         form: {
             a: {name: 'pass', value: '20'},
@@ -11,13 +14,13 @@ const datas = {
 };
 
 
-window.addEventListener('arfready', function(e){
-    console.log('arfready event triggered!', e);
+window.addEventListener('rfsready', function(e){
+    console.log('rfsready event triggered!', e);
 });
 
-ARF.add_sandbox('main', datas.main, {
+KSS.add_sandbox('main', datas.main, {
     tpl: 'main',
     target: document.body
 });
 
-ARF.init();
+KSS.init();
