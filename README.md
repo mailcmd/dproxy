@@ -12,7 +12,7 @@
 ### Deps
 - Before doing KSS I made DProxy (deep proxy) to make it possible for KSS to work the way I wanted 
   it to. I keep both as sepated libs because DProxy can be used in many other projects. 
-- So, KSS depends only of DProxy.
+- So, KSS depends only of DProxy.make 
 
 ### Special attributes
 - :foreach
