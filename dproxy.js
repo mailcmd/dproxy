@@ -21,15 +21,16 @@ function DProxy(obj, callback) {
         return obj[key];
     };
 
-    const merge = function(obj, pobj, robj) {
+    const merge = function(obj, pobj, robj, bkey = '') {
         pobj = pobj ?? this.p;
         robj = robj ?? this.r;
         for (let key in obj) {
-            if (robj == this.r) pobj[key];
+            if (robj == this.r) pobj[key]; // force a get
             if (robj[key] === undefined) continue;
             if (typeof obj[key] == 'object') {
-                merge(obj[key], pobj[key], robj[key]);
+                merge(obj[key], pobj[key], robj[key], bkey+'.'+key);
             } else {
+                _this.fullKey = bkey;
                 pobj[key] = obj[key];
             }
         }

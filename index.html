@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>DProxy Test</title>
+</head>
+<body>
+    <b>CPU:</b>
+    <span metric-id=".metrics.cpu.usage"></span> -
+    <span metric-id=".metrics.cpu.loadavg.0"></span>
+    <span metric-id=".metrics.cpu.loadavg.1"></span>
+    <span metric-id=".metrics.cpu.loadavg.2"></span>
+    <br/>
+    <b>MEMORY:</b>
+    <span metric-id=".metrics.memory.usage"></span> -
+    <span metric-id=".metrics.memory.free"></span>
+    <br/>
+    <b>DISK:</b>
+    <span metric-id=".metrics.disk.usage"></span> -
+    <span metric-id=".metrics.disk.free_space"></span>
+
+    <script src="dproxy.js"></script>
+    <script src="index.js"></script>
+</body>    
+</html>
