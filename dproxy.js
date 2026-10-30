@@ -1,7 +1,9 @@
+/* v: 0.1.3 */
+
 function DProxy(obj, callback) {
     const _this = this;
 
-    const set = function(fullKey, val) {
+    const _set = function(fullKey, val) {
         const arrKeys = fullKey.slice(1).split('.');
         let [key, keys] = [arrKeys.pop(), arrKeys];
         const obj = keys.reduce((o, k) => {
@@ -10,7 +12,7 @@ function DProxy(obj, callback) {
         obj[key] = val;
     };
 
-    const get = function(fullKey) {
+    const _get = function(fullKey) {
         if (fullKey == '') return this;
         if (fullKey == '.') return this;
         const arrKeys = fullKey.slice(1).split('.');
@@ -45,10 +47,10 @@ function DProxy(obj, callback) {
             }
             // Special function set
             if (obj == _this.mainObject && key == 'set') {
-                return set.bind(_this.mainProxy);
+                return _set.bind(_this.mainProxy);
             }
             if (obj == _this.mainObject && key == 'get') {
-                return get.bind(_this.mainProxy);
+                return _get.bind(_this.mainProxy);
             }
             // Special function merge
             if (obj == _this.mainObject && key == 'merge') {
@@ -77,8 +79,8 @@ function DProxy(obj, callback) {
             return obj[key];
         },
         set(obj, key, val) {
-            if (obj.__isProxy) {
-                obj[key] = val;
+            if (typeof val == 'object') {
+                merge(val, _this.mainProxy.get(_this.fullKey+'.'+key), obj[key], _this.fullKey);
             } else {
                 obj[key] = val;
                 _this.callback(_this.fullKey+'.'+key, val, obj);
